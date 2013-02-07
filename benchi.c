@@ -6,6 +6,9 @@
 #include<stdio.h>
 #include <stdlib.h>
 #include<time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 int get_nr_fork_exec_per_sec(const char **cmd, int duration_in_seconds)
 {
@@ -20,6 +23,10 @@ int get_nr_fork_exec_per_sec(const char **cmd, int duration_in_seconds)
       pid = fork();
       if (pid == 0)
       {
+         int fd = open("/dev/null", O_WRONLY);
+         dup2(fd, 1);
+         dup2(fd, 2);
+
          execve(cmd[0], cmd, NULL);
          exit(0);
       }
@@ -31,24 +38,26 @@ int get_nr_fork_exec_per_sec(const char **cmd, int duration_in_seconds)
       delta = ( (t2.tv_sec + (t2.tv_nsec/1000000000.0)) -
                 (t1.tv_sec + (t1.tv_nsec/1000000000.0)));
       if(delta > duration_in_seconds)
-         return i;
+         return i/duration_in_seconds;
    }
 }
 
 int main(int argc, char **argv)
 {
    int i, count;
+   const char *cmds[][5] = {
+      {"/bin/true", NULL},
+      {"/bin/sh", "-c", "/bin/true", NULL},
+      {"/usr/bin/curl", "file:/dev/null", NULL},
+      {"/usr/bin/curl", "http://localhost", NULL},
+      NULL, 
+   };
+
    printf("fork/exec/sh/true test\n");
-
-   const char *cmd1[] = {"/bin/true", NULL};
-   const char *cmd2[] = {"/bin/sh", "-c", "/bin/true", NULL};
-
-   printf("cmd: %s\n", cmd1[0]);
-   count = get_nr_fork_exec_per_sec(cmd1, 1);
-   printf("fork/exec per sec: %i\n", count);
-
-   printf("cmd: %s\n", cmd2[0]);
-   count = get_nr_fork_exec_per_sec(cmd2, 1);
-   printf("fork/exec per sec: %i\n", count);
-
+   for(i=0; cmds[i][0] != NULL; i++)
+   {
+      printf("cmd: %i %s\n", i, cmds[i][0]);
+      count = get_nr_fork_exec_per_sec(cmds[i], 2);
+      printf("fork/exec per sec: %i\n\n", count);
+   }
 }
