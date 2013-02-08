@@ -1,4 +1,3 @@
-mini-benchmarks
-===============
+Small set of scripts for e.g. load testing.
 
-A small set of mini benchmark test scripts
+License MIT.
