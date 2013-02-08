@@ -44,10 +44,12 @@ int get_nr_fork_exec_per_sec(const char **cmd, int duration_in_seconds)
 
 int main(int argc, char **argv)
 {
-   int i, count;
+   int i, j, count;
    const char *cmds[][5] = {
-      {"/bin/true", NULL},
-      {"/bin/sh", "-c", "/bin/true", NULL},
+      {"no-command", NULL, NULL},
+      {"/bin/true", NULL, NULL},
+      {"/bin/dash", "-c", "/bin/true", NULL},
+      {"/bin/bash", "-c", "/bin/true", NULL},
       {"/usr/bin/curl", "file:/dev/null", NULL},
       {"/usr/bin/curl", "http://localhost", NULL},
       NULL, 
@@ -56,7 +58,10 @@ int main(int argc, char **argv)
    printf("fork/exec/sh/true test\n");
    for(i=0; cmds[i][0] != NULL; i++)
    {
-      printf("cmd: %i %s\n", i, cmds[i][0]);
+      printf("cmd: ");
+      for(j=0; cmds[i][j] != NULL; j++)
+         printf("%s ", cmds[i][j]);
+      printf("\n");
       count = get_nr_fork_exec_per_sec(cmds[i], 2);
       printf("fork/exec per sec: %i\n\n", count);
    }
